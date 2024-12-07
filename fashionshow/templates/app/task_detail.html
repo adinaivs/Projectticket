@@ -1,0 +1,30 @@
+{% extends 'app/base.html' %}
+
+{% block title %}
+{{ task.title }}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="card">
+    <img src="{{ task.image.url }}" class="card-img-top" alt="{{ task.title }}" style="max-height: 300px; object-fit: cover;">
+    <div class="card-body">
+      <h1 class="card-title">{{ task.title }}</h1>
+      <p class="card-text"><strong>Место проведения:</strong> {{ task.location }}</p>
+      <p class="card-text"><strong>Дата:</strong> {{ task.event_date|date:"d.m.Y H:i" }}</p>
+      <p class="card-text"><strong>Описание:</strong> {{ task.task }}</p>
+      <div>
+        <h4>Цены и доступные места:</h4>
+        <ul>
+          {% for class_type in task.task_class_types.all %}
+            <li>
+              {{ class_type.class_type.name }}: {{ class_type.price }} руб.
+              (Доступно: {{ class_type.available_seats }} мест)
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

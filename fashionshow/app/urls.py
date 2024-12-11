@@ -8,6 +8,7 @@ from django.contrib import admin
 
 urlpatterns = [
     path('', views.index, name='home'),
+
     path('admin/', admin.site.urls),
 
     path('task/<int:pk>/', TaskDetailView.as_view(), name='task_detail'),
@@ -19,6 +20,7 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('register/confirm/<str:token>/', views.register_confirm, name='register_confirm'),  # Добавьте эту строку
 
+    path('about/', views.about, name='about'),  # Исправлено: изменен путь на '/about/'
 ]
 
 # Обработка медиафайлов

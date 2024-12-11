@@ -1,14 +1,11 @@
+from .models import CustomUser, Task, Token, Comment
 import uuid
-
 from django.core.mail import send_mail
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
-from django.views.generic import FormView, TemplateView
-
-from .models import CustomUser, Task, Token, Comment
-from django.http import HttpResponse, JsonResponse
+from django.views.generic import FormView
 from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login
 from django.views.generic.detail import DetailView
 from django.utils.translation import gettext_lazy as _
 from .forms import RegisterForm, CommentForm
@@ -36,8 +33,6 @@ def index(request):
         'query': query,
         'location_filter': location_filter,
     })
-
-
 
 class TaskDetailView(DetailView):
     model = Task
@@ -112,6 +107,26 @@ def delete_comment(request, pk):
 
     return redirect('task_detail', pk=comment.task.pk)
 
+def index(request):
+    # Получаем поисковый запрос из строки запроса
+    query = request.GET.get('q', '')  # 'q' - это имя поля в форме поиска
+    if query:
+        # Выполняем фильтрацию задач по названию или описанию
+        tasks = Task.objects.filter(
+            Q(title__icontains=query) | Q(task__icontains=query)
+        ).order_by('-id')
+    else:
+        # Если поисковый запрос не указан, выводим все задачи
+        tasks = Task.objects.order_by('-id')
+
+    # Передаём данные в шаблон
+    return render(request, 'app/index.html', {
+        'title': 'Главная страница сайта',
+        'tasks': tasks,
+        'query': query,  # Передаём запрос для отображения в форме
+    })
+
+
 class RegisterView(FormView):
     form_class = RegisterForm
     template_name = 'registration/signup.html'
@@ -174,8 +189,6 @@ def register_confirm(request, token):
         messages.error(request, _("Invalid or expired token."))
         return redirect(to=reverse_lazy("signup"))
 
-
-
 def user_login(request):
     if request.user.is_authenticated:
         return redirect('home')
@@ -198,4 +211,11 @@ def user_login(request):
             messages.warning(request, _("Incorrect username or password."))
 
     return render(request, 'registration/login.html')
+
+# The about function is excluded as per your instructions
+
+
+# Теперь метод about должен быть вне класса TaskDetailView
+def about(request):
+    return render(request, 'app/about.html')
 

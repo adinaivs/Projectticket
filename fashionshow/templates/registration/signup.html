@@ -16,35 +16,39 @@
             font-family: Arial, sans-serif;
             font-size: 14px;
         }
-        .form-container {
+        .wrapper {
             max-width: 400px;
             width: 100%;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
         }
-        h4 {
-            font-size: 18px;
-            text-align: center;
-            margin-bottom: 20px;
+        #formContent {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         input[type="text"], input[type="email"], input[type="password"], input[type="submit"] {
             width: 100%;
-            margin: 8px 0;
-            padding: 8px;
+            margin: 10px 0;
+            padding: 10px;
             border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
+            border-radius: 5px;
+            box-sizing: border-box;
         }
         input[type="submit"] {
             background-color: #007bff;
             color: white;
             border: none;
             cursor: pointer;
-            transition: background-color 0.2s;
+            box-shadow: 0px 4px 10px rgba(0, 123, 255, 0.5);
         }
         input[type="submit"]:hover {
             background-color: #0056b3;
         }
-        .text-center {
-            text-align: center;
+        #formFooter {
+            margin-top: 15px;
         }
         .underlineHover {
             color: #007bff;
@@ -53,30 +57,46 @@
         .underlineHover:hover {
             text-decoration: underline;
         }
+        .error-messages {
+            color: red;
+            font-size: 12px;
+            list-style-type: none;
+            padding-left: 0;
+        }
     </style>
 </head>
 <body>
-    <div class="form-container">
-        <!-- Title -->
-        <h4>User Registration</h4>
+    <div class="wrapper">
+        <div id="formContent">
+            <!-- Заголовок -->
+            <div class="fadeIn first">
+                <h4 class="mt-2">Registration</h4>
+            </div>
 
-        <!-- Registration Form -->
-        <form method="post" action="signup">
-             {% csrf_token %}
-             {{ form.as_p }}
-            <input type="submit" value="Sign Up">
-        </form>
-{% if form.errors %}
-    <ul>
-        {% for field, errors in form.errors.items %}
-            <li>{{ field }}: {{ errors|join:", " }}</li>
-        {% endfor %}
-    </ul>
-{% endif %}
-        <!-- Redirect to login -->
-        <p class="text-center mt-3">
-            Already have an account? <a class="underlineHover" href="/login">Login</a>
-        </p>
+            <!-- Ошибки (если есть) -->
+            {% if form.errors %}
+                <ul class="error-messages">
+                    {% for field, errors in form.errors.items %}
+                        <li><strong>{{ field }}:</strong> {{ errors|join:", " }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            <!-- Форма регистрации -->
+            <form method="post" action="signup">
+                {% csrf_token %}
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+                <input type="submit" value="Register">
+            </form>
+
+            <!-- Ссылка на вход -->
+            <div id="formFooter">
+                Already have an account? <a class="underlineHover" href="/login">Log in</a>
+            </div>
+        </div>
     </div>
 </body>
 </html>

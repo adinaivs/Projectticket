@@ -105,6 +105,7 @@ footer .p-3 {
     background-color: #343a40;
     color: #fff;
 }
+<<<<<<< HEAD
 /* Основной контейнер */
 .container {
     max-width: 1200px;
@@ -219,3 +220,5 @@ footer .p-3 {
     box-shadow: 0 0 5px rgba(13, 110, 253, 0.5);
     outline: none;
 }
+=======
+>>>>>>> design

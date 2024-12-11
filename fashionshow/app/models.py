@@ -6,8 +6,6 @@ from django.contrib.auth.models import BaseUserManager
 from django.db import models
 from django.contrib.auth import get_user_model
 
-
-
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -92,9 +90,9 @@ class Task(models.Model):
 
     def __str__(self):
         return self.title
+
     def get_absolute_url(self):
         return reverse('task_detail', kwargs={'pk': self.pk})
-
 
 
 class Comment(models.Model):

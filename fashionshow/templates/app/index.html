@@ -5,57 +5,49 @@
 {% endblock %}
 
 {% block content %}
-<div class="text-center" style="background-color: #f8f9fa; color: #333; padding: 20px;">
+<div class="text-center" style="padding: 40px 20px; color: #333;">
+  <h1 class="mb-4" style="font-weight: 900; text-transform: uppercase; letter-spacing: 2px;">Мероприятия</h1>
+
   <!-- Форма поиска и фильтрации -->
-  <form method="get" class="mb-4 d-flex justify-content-center flex-wrap">
-    <input
-      type="text"
-      name="q"
-      class="form-control me-2 mb-2"
-      placeholder="Поиск по названию или описанию..."
-      value="{{ query|default:'' }}"
-      style="max-width: 300px;"
-    >
-    <input
-      type="text"
-      name="location"
-      class="form-control me-2 mb-2"
-      placeholder="Место проведения..."
-      value="{{ location_filter|default:'' }}"
-      style="max-width: 300px;"
-    >
-    <button type="submit" class="btn btn-primary mb-2">Искать</button>
+  <form method="get" action="{% url 'home' %}" class="mb-2">
+    <div style="max-width: 400px; margin: 0 auto; display: flex; align-items: center;">
+      <button type="submit" class="btn btn-primary" style="background: #ff7f50; border: none; font-weight: bold; padding: 8px 15px; border-radius: 25px; margin-right: 10px;">Искать</button>
+      <input type="text" name="search" class="form-control" placeholder="Поиск мероприятий..." value="{{ request.GET.search }}" style="padding: 8px 15px; border-radius: 25px; border: 1px solid #ddd; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); font-size: 0.9rem; flex-grow: 1;">
+    </div>
   </form>
-{% if not tasks %}
-<p class="text-muted mt-4">Мероприятия не найдены. Попробуйте изменить параметры поиска.</p>
-{% endif %}
+
+  {% if tasks %}
   <div class="d-flex flex-wrap justify-content-center">
     {% for task in tasks %}
-      <div class="card mt-3 mx-3" style="width: 18rem; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+      <div class="card mt-3 mx-3" style="width: 18rem; background: #fff; border: 1px solid #ddd; border-radius: 12px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); overflow: hidden; display: flex; flex-direction: column;">
         <a href="{{ task.get_absolute_url }}" style="text-decoration: none; color: inherit;">
-          <img src="{{ task.image.url }}"
-               alt="{{ task.title }}"
-               class="card-img-top"
-               style="height: 200px; object-fit: cover; border-top-left-radius: 8px; border-top-right-radius: 8px;">
+          <img src="{{ task.image.url }}" alt="{{ task.title }}" class="card-img-top" style="height: 350px; object-fit: cover;">
         </a>
-        <div class="card-body" style="background-color: #ffffff;">
-          <h5 class="card-title" style="font-weight: bold; color: #333;">
+        <div class="card-body" style="padding: 20px; display: flex; flex-direction: column; flex-grow: 1;">
+          <h5 class="card-title" style="font-weight: 700; color: #333; margin-bottom: 10px;">
             <a href="{{ task.get_absolute_url }}" style="text-decoration: none; color: #333;">
               {{ task.title }}
             </a>
           </h5>
-          <p class="card-text" style="color: #666; font-size: 0.9rem;">
+          <p class="card-text" style="color: #555; font-size: 0.9rem;">
             <strong>Место проведения:</strong> {{ task.location }}
           </p>
-          <p class="card-text" style="color: #666; font-size: 0.9rem;">
+          <p class="card-text" style="color: #555; font-size: 0.9rem;">
             <strong>Дата:</strong> {{ task.event_date|date:"d.m.Y H:i" }}
           </p>
-          <p class="card-text" style="color: #666; font-size: 0.9rem;">
+          <p class="card-text" style="color: #555; font-size: 0.9rem;">
             <strong>Описание:</strong> {{ task.task|truncatechars:60 }}
           </p>
+          <!-- Кнопка "Подробнее", которая всегда внизу -->
+          <a href="{{ task.get_absolute_url }}" class="btn btn-primary" style="margin-top: auto; background: #6a11cb; border: none; padding: 8px 15px; border-radius: 25px; font-weight: bold; color: #fff;">Подробнее</a>
         </div>
       </div>
     {% endfor %}
   </div>
+  {% else %}
+  <div class="mt-4">
+    <p style="color: #666; font-size: 1.2rem; font-weight: bold;">Мероприятия не найдены.</p>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

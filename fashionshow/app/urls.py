@@ -11,6 +11,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     path('task/<int:pk>/', TaskDetailView.as_view(), name='task_detail'),
+    path('comment/<int:pk>/toggle/', views.toggle_comment_publish, name='comment_toggle_publish'),
+    path('comment/delete/<int:pk>/', views.delete_comment, name='delete_comment'),
 
     path('login', user_login, name="login"),
     path('signup', RegisterView.as_view(), name="signup"),

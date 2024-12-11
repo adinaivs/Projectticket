@@ -1,10 +1,11 @@
-
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
 from django.contrib.auth.models import BaseUserManager
 from django.db import models
 from django.contrib.auth import get_user_model
+
 
 
 class CustomUserManager(BaseUserManager):
@@ -93,3 +94,16 @@ class Task(models.Model):
         return self.title
     def get_absolute_url(self):
         return reverse('task_detail', kwargs={'pk': self.pk})
+
+
+
+class Comment(models.Model):
+    task = models.ForeignKey('Task', related_name='comments', on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    subject = models.CharField(max_length=255, verbose_name="Тема комментария")
+    message = models.TextField(verbose_name="Сообщение")
+    is_published = models.BooleanField(default=True, verbose_name="Опубликовано")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата и время")
+
+    def __str__(self):
+        return f"Комментарий от {self.user.email} на {self.task.title}"

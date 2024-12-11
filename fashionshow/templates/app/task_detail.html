@@ -1,30 +1,66 @@
 {% extends 'app/base.html' %}
 
 {% block title %}
-{{ task.title }}
+  {{ task.title }} - Fashion Show
 {% endblock %}
 
 {% block content %}
 <div class="container mt-5">
-  <div class="card">
-    <img src="{{ task.image.url }}" class="card-img-top" alt="{{ task.title }}" style="max-height: 300px; object-fit: cover;">
-    <div class="card-body">
-      <h1 class="card-title">{{ task.title }}</h1>
-      <p class="card-text"><strong>Место проведения:</strong> {{ task.location }}</p>
-      <p class="card-text"><strong>Дата:</strong> {{ task.event_date|date:"d.m.Y H:i" }}</p>
-      <p class="card-text"><strong>Описание:</strong> {{ task.task }}</p>
-      <div>
-        <h4>Цены и доступные места:</h4>
-        <ul>
-          {% for class_type in task.task_class_types.all %}
-            <li>
-              {{ class_type.class_type.name }}: {{ class_type.price }} руб.
-              (Доступно: {{ class_type.available_seats }} мест)
-            </li>
-          {% endfor %}
-        </ul>
+  <!-- Карточка с изображением и описанием -->
+  <div class="card custom-card d-flex flex-row">
+    <!-- Изображение слева -->
+    <div class="custom-image-container">
+      <img src="{{ task.image.url }}" class="custom-card-img" alt="{{ task.title }}">
+    </div>
+    <!-- Контент справа -->
+    <div class="custom-content">
+      <div class="card-body custom-card-body">
+        <h1 class="card-title custom-title">{{ task.title }}</h1>
+        <p class="card-text"><strong>Место проведения:</strong> {{ task.location }}</p>
+        <p class="card-text"><strong>Дата:</strong> {{ task.event_date|date:"d.m.Y H:i" }}</p>
+        <p class="card-text custom-description"><strong>Описание:</strong> {{ task.task }}</p>
+
+        <div class="task-class-types">
+          <h4 class="custom-heading">Цены и доступные места:</h4>
+          <ul class="custom-list">
+            {% for class_type in task.task_class_types.all %}
+              <li class="class-item">
+                <strong>{{ class_type.class_type.name }}</strong>: {{ class_type.price }} руб.
+                (Доступно: {{ class_type.available_seats }} мест)
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
       </div>
     </div>
+  </div>
+
+  <!-- Отдельный контейнер для комментариев -->
+  <div class="comments-section mt-5">
+    <h4 class="custom-heading">Комментарии</h4>
+    {% if comments %}
+      {% for comment in comments %}
+        <div class="comment">
+          <div class="border p-3 mb-3 custom-comment-box">
+            <p class="comment-author"><strong>{{ comment.user.first_name }} {{ comment.user.last_name }} ({{ comment.user.email }})</strong></p>
+            <p class="comment-subject">{{ comment.subject }}</p>
+            <p class="comment-message">{{ comment.message }}</p>
+            <p class="comment-date"><small>Опубликовано: {{ comment.created_at }}</small></p>
+          </div>
+          {% if comment.user == request.user or request.user.is_staff %}
+            <a href="{% url 'delete_comment' comment.pk %}" class="btn btn-danger custom-btn">Удалить</a>
+          {% endif %}
+        </div>
+      {% endfor %}
+    {% else %}
+      <p>Нет комментариев для этой задачи.</p>
+    {% endif %}
+    <h4 class="custom-heading">Оставить комментарий</h4>
+    <form method="POST" class="comment-form">
+      {% csrf_token %}
+      {{ comment_form.as_p }}
+      <button type="submit" class="btn btn-primary custom-btn">Добавить комментарий</button>
+    </form>
   </div>
 </div>
 {% endblock %}

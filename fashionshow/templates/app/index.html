@@ -6,7 +6,29 @@
 
 {% block content %}
 <div class="text-center" style="background-color: #f8f9fa; color: #333; padding: 20px;">
-  <h1 class="mb-4" style="font-weight: bold; text-transform: uppercase;">Мероприятия</h1>
+  <!-- Форма поиска и фильтрации -->
+  <form method="get" class="mb-4 d-flex justify-content-center flex-wrap">
+    <input
+      type="text"
+      name="q"
+      class="form-control me-2 mb-2"
+      placeholder="Поиск по названию или описанию..."
+      value="{{ query|default:'' }}"
+      style="max-width: 300px;"
+    >
+    <input
+      type="text"
+      name="location"
+      class="form-control me-2 mb-2"
+      placeholder="Место проведения..."
+      value="{{ location_filter|default:'' }}"
+      style="max-width: 300px;"
+    >
+    <button type="submit" class="btn btn-primary mb-2">Искать</button>
+  </form>
+{% if not tasks %}
+<p class="text-muted mt-4">Мероприятия не найдены. Попробуйте изменить параметры поиска.</p>
+{% endif %}
   <div class="d-flex flex-wrap justify-content-center">
     {% for task in tasks %}
       <div class="card mt-3 mx-3" style="width: 18rem; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">

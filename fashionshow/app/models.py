@@ -34,6 +34,7 @@ class CustomUser(AbstractUser):
 
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
+    photo = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []

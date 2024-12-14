@@ -8,11 +8,26 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.views.generic.detail import DetailView
 from django.utils.translation import gettext_lazy as _
-from .forms import RegisterForm, CommentForm
+from .forms import RegisterForm, CommentForm, ProfileForm
 from django.utils.timezone import now
 from datetime import timedelta
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+
+@login_required
+def profile_view(request):
+    user = request.user  # Получаем текущего пользователя
+
+    if request.method == 'POST':
+        form = ProfileForm(request.POST, request.FILES, instance=user)
+        if form.is_valid():
+            form.save()
+            return redirect('profile')
+    else:
+        form = ProfileForm(instance=user)
+
+    return render(request, 'app/profile.html', {'form': form, 'user': user})
+
 
 def index(request):
     query = request.GET.get('q')  # Получение строки поиска

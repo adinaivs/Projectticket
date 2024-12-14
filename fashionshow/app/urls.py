@@ -2,7 +2,7 @@ from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
 from . import views
-from .views import RegisterView, user_login, TaskDetailView
+from .views import RegisterView, user_login, TaskDetailView, profile_view
 from django.contrib.auth import views as auth_views
 from django.contrib import admin
 
@@ -19,7 +19,7 @@ urlpatterns = [
     path('signup', RegisterView.as_view(), name="signup"),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('register/confirm/<str:token>/', views.register_confirm, name='register_confirm'),  # Добавьте эту строку
-
+    path('profile/', profile_view, name='profile'),
     path('about/', views.about, name='about'),  # Исправлено: изменен путь на '/about/'
 ]
 

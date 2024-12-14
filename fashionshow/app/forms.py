@@ -2,6 +2,13 @@ from django import forms
 from .models import CustomUser, Comment
 from django.utils.translation import gettext_lazy as _
 
+
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = CustomUser
+        fields = ['photo']  # Только поле для фото
+
+
 class CommentForm(forms.ModelForm):
     class Meta:
         model = Comment

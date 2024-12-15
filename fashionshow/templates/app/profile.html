@@ -28,7 +28,7 @@
     <!-- Информация профиля -->
     <div class="col-md-6">
       <p style="font-size: 24px; font-weight: bold;"><strong>Email:</strong> {{ user.email }}</p>
-      <form method="post" action="#">
+      <form method="post" action="{% url 'password_reset' %}">
         {% csrf_token %}
         <div class="form-group mt-3">
           <button type="submit" class="btn mt-3" style="background: #6a11cb; border: none; padding: 8px 15px; border-radius: 25px; font-weight: bold; color: white;">

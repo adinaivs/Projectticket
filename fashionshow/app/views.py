@@ -234,3 +234,5 @@ def user_login(request):
 def about(request):
     return render(request, 'app/about.html')
 
+
+

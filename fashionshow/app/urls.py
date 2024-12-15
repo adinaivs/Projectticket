@@ -21,6 +21,14 @@ urlpatterns = [
     path('register/confirm/<str:token>/', views.register_confirm, name='register_confirm'),  # Добавьте эту строку
     path('profile/', profile_view, name='profile'),
     path('about/', views.about, name='about'),  # Исправлено: изменен путь на '/about/'
+ path('reset-password/', auth_views.PasswordResetView.as_view(
+        template_name='registration/password_reset.html'), name='password_reset'),
+    path('reset-password/done/', auth_views.PasswordResetDoneView.as_view(
+        template_name='registration/password_reset_done.html'), name='password_reset_done'),
+    path('reset-password-confirm/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(
+        template_name='registration/password_reset_confirm.html'), name='password_reset_confirm'),
+    path('reset-password-complete/', auth_views.PasswordResetCompleteView.as_view(
+        template_name='registration/password_reset_complete.html'), name='password_reset_complete'),
 ]
 
 # Обработка медиафайлов

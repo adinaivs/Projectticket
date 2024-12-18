@@ -1,11 +1,9 @@
-from django.conf.urls.i18n import i18n_patterns
-from django.urls import path, include
+from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
 from . import views
-from .views import RegisterView, user_login, TaskDetailView, profile_view
+from .views import RegisterView, user_login, TaskDetailView, profile_view, seat_pr
 from django.contrib.auth import views as auth_views
-from django.contrib import admin
 
 urlpatterns = [
     path('', views.home, name='home'),
@@ -13,7 +11,7 @@ urlpatterns = [
     path('task/<int:pk>/', TaskDetailView.as_view(), name='task_detail'),
     path('comment/<int:pk>/toggle/', views.toggle_comment_publish, name='comment_toggle_publish'),
     path('comment/delete/<int:pk>/', views.delete_comment, name='delete_comment'),
-    path('task/<int:pk>/booking/', views.event_booking, name='event_booking'),
+    path('task/<int:pk>/seats/', seat_pr, name='seat_pr'),
 
     path('profile/', profile_view, name='profile'),
     path('about/', views.about, name='about'),  # Исправлено: изменен путь на '/about/'
@@ -31,11 +29,8 @@ urlpatterns = [
     path('reset-password-complete/', auth_views.PasswordResetCompleteView.as_view(
         template_name='registration/password_reset_complete.html'), name='password_reset_complete'),
 
-    path('i18n/', include('django.conf.urls.i18n')),
 ]
-urlpatterns += i18n_patterns(
-    path('', include('your_app.urls')),
-)
+
 # Обработка медиафайлов
 if settings.DEBUG:  # Только в режиме разработки
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

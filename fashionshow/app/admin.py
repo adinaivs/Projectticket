@@ -1,7 +1,15 @@
 from django.contrib import admin
-from .models import CustomUser, Task, ClassType, TaskClassType, Comment
+from .models import CustomUser, Task, ClassType, TaskClassType, Comment, Seat
 
 admin.site.site_header = 'Fashion Show Admin Panel'
+
+@admin.register(Seat)
+class SeatAdmin(admin.ModelAdmin):
+    list_display = ('row', 'number', 'is_reserved')  # Поля, которые будут отображаться в списке
+    list_filter = ('is_reserved',)  # Фильтры для админки
+    search_fields = ('row', 'number')  # Поиск по полям
+    list_editable = ('is_reserved',)  # Возможность редактировать поле в списке
+
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):

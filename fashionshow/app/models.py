@@ -6,6 +6,19 @@ from django.contrib.auth.models import BaseUserManager
 from django.db import models
 from django.contrib.auth import get_user_model
 
+
+class Seat(models.Model):
+    row = models.CharField(max_length=1, choices=[(chr(i), chr(i)) for i in range(65, 91)])  # A-Z
+    number = models.PositiveIntegerField()
+    is_reserved = models.BooleanField(default=False)
+
+    # Связь с TaskClassType
+    task_class_type = models.ForeignKey('TaskClassType', related_name='seats', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.row}{self.number} ({self.task_class_type.class_type.name})"
+
+
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -65,37 +78,25 @@ class ClassType(models.Model):
         return self.name
 
 
-# Промежуточная модель: связывает Task и ClassType с ценой и количеством мест
 class TaskClassType(models.Model):
     task = models.ForeignKey('Task', on_delete=models.CASCADE, related_name="task_class_types")
-    class_type = models.ForeignKey(ClassType, on_delete=models.CASCADE, related_name="class_type_tasks")
+    class_type = models.ForeignKey('ClassType', on_delete=models.CASCADE, related_name="class_type_tasks")
     price = models.DecimalField("Цена", max_digits=10, decimal_places=2)
     available_seats = models.PositiveIntegerField("Доступные места")
 
     def __str__(self):
         return f"{self.task.title} - {self.class_type.name} ({self.price} руб., {self.available_seats} мест)"
 
+    def create_seats(self):
+        """Создание мест для данного типа класса и задачи"""
+        for i in range(1, self.available_seats + 1):
+            Seat.objects.create(
+                task_class_type=self,
+                row=self.class_type.name[0],  # Первая буква названия класса как ряд
+                number=i,
+            )
 
-# Модель для мест на мероприятии
-class Seat(models.Model):
-    class Status(models.TextChoices):
-        AVAILABLE = "available", _("Доступно")
-        SOLD = "sold", _("Продано")
 
-    row = models.PositiveIntegerField("Ряд")
-    number = models.PositiveIntegerField("Номер места")
-    status = models.CharField(
-        "Статус",
-        max_length=10,
-        choices=Status.choices,
-        default=Status.AVAILABLE,
-    )
-    task_class_type = models.ForeignKey(TaskClassType, on_delete=models.CASCADE, related_name="seats")
-
-    def __str__(self):
-        return f"Ряд {self.row}, Место {self.number} - {self.get_status_display()} ({self.task_class_type.class_type.name})"
-
-# Модель мероприятия
 class Task(models.Model):
     title = models.CharField(verbose_name=_("Название мероприятия"), max_length=255, null=True, blank=True)
     task = models.TextField('Описание')

@@ -1,6 +1,4 @@
-from django.db.models.functions import datetime
-
-from .models import CustomUser, Task, Token, Comment, Seat
+from .models import CustomUser, Task, Token, Comment, Seat, TaskClassType
 import uuid
 from django.core.mail import send_mail
 from django.shortcuts import render, redirect, get_object_or_404
@@ -14,21 +12,27 @@ from .forms import RegisterForm, CommentForm, ProfileForm
 from django.utils.timezone import now
 from datetime import timedelta
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
 from django.utils.translation import gettext as _
 
-def event_booking(request, pk):
+
+def seat_pr(request, pk):
+    # Получаем задачу по её ID (primary key)
     task = get_object_or_404(Task, pk=pk)
-    seats = Seat.objects.filter(task_class_type__task=task).select_related('task_class_type__class_type')
-    class_types = task.task_class_types.all()
-    filtered_seats = {class_type: seats.filter(task_class_type__class_type=class_type.class_type) for class_type in class_types}
 
-    context = {
-        "task": task,
-        "seats": filtered_seats,
-    }
+    # Получаем все классы для этой задачи
+    task_class_types = TaskClassType.objects.filter(task=task)
 
-    return render(request, "booking/event_booking.html", context)
+    # Для каждого типа класса получаем все сиденья, связанные с ним
+    seats = []
+    for task_class_type in task_class_types:
+        seats.extend(Seat.objects.filter(task_class_type=task_class_type))
+
+    # Передаем данные в шаблон
+    return render(request, 'booking/event_seats.html', {
+        'task': task,
+        'task_class_types': task_class_types,
+        'seats': seats,
+    })
 
 
 @login_required

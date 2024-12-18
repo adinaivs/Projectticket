@@ -1,0 +1,113 @@
+{% extends 'app/base.html' %}
+
+{% block content %}
+    <style>
+        .row {
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-evenly;
+            flex-wrap: wrap; /* Для лучшего расположения кнопок */
+        }
+
+        .seat {
+            width: 30px;
+            height: 30px;
+            margin: 5px;
+            border: 2px solid #ccc; /* Обводка вокруг кнопок */
+            border-radius: 5px;
+            text-align: center;
+            line-height: 30px;
+            cursor: pointer;
+        }
+
+        .reserved {
+            background-color: #f00;
+            color: #fff;
+            cursor: not-allowed;
+        }
+
+        .available {
+            background-color: #0f0;
+        }
+
+        .selected {
+            background-color: #00f;
+            color: #fff;
+        }
+
+        .first-class {
+            background-color: #ff9900; /* Оранжевый */
+        }
+
+        .second-class {
+            background-color: #33cc33; /* Зеленый */
+        }
+
+        .vip-class {
+            background-color: #cc33cc; /* Пурпурный */
+        }
+
+        .class-info {
+            margin-bottom: 20px;
+        }
+
+        .seat-container {
+            margin-top: 30px;
+            max-width: 80%; /* Уменьшаем ширину блока */
+            margin-left: auto;
+            margin-right: auto; /* Центрируем блок */
+        }
+
+        .class-price {
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
+
+    <h1>{{ task.title }}</h1>
+    <p>Место проведения: {{ task.location }}</p>
+    <p>Дата: {{ task.event_date }}</p>
+
+    <!-- Блок с ценами для каждого класса -->
+    <div class="class-info">
+        {% for task_class_type in task_class_types %}
+            <p class="class-price" style="color:
+                {% if task_class_type.class_type.name == 'First Class' %} #ff9900;
+                {% elif task_class_type.class_type.name == 'Second Class' %} #33cc33;
+                {% elif task_class_type.class_type.name == 'VIP' %} #cc33cc;
+                {% endif %}">
+                Стоимость {{ task_class_type.class_type.name }}: {{ task_class_type.price }} руб.
+            </p>
+        {% endfor %}
+    </div>
+
+    <!-- Блок с кнопками мест -->
+    <div class="seat-container">
+        {% for task_class_type in task_class_types %}
+            <div class="row">
+                {% for seat in seats %}
+                    {% if seat.task_class_type == task_class_type %}
+                        <!-- Каждое место представлено кнопкой -->
+                        <button class="seat {% if seat.is_reserved %}reserved{% else %}available{% endif %}
+                                {% if seat.task_class_type.class_type.name == 'First Class' %}first-class{% elif seat.task_class_type.class_type.name == 'Second Class' %}second-class{% elif seat.task_class_type.class_type.name == 'VIP' %}vip-class{% endif %}"
+                                data-seat-id="{{ seat.id }}"
+                                {% if seat.is_reserved %}disabled{% endif %}>
+                            {{ seat.number }}
+                        </button>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        // Пример для выделения выбранного места
+        document.querySelectorAll('.seat').forEach(button => {
+            button.addEventListener('click', function() {
+                if (!this.classList.contains('reserved')) {
+                    this.classList.toggle('selected');
+                }
+            });
+        });
+    </script>
+{% endblock %}

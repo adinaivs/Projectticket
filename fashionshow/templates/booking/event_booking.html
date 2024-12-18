@@ -1,0 +1,80 @@
+{% load seats_tags %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="row">
+    <div class="col-12 text-center">
+      <h1 class="display-4" style="font-family: 'Roboto', sans-serif; color: #333;">
+        Выберите места на {{ task.title }}
+      </h1>
+      <p style="font-size: 1.2rem; color: #555;">Место проведения: {{ task.location }}</p>
+    </div>
+  </div>
+
+  <!-- Графическое представление мест -->
+  <div class="row justify-content-center mt-4">
+    <div class="col-12">
+      <div class="seating-chart">
+        {% for class_type, seats_list in seats.items %}
+          <h4 style="color: {{ class_type.class_type.color }};">
+            {{ class_type.class_type.name }} ({{ class_type.price }} сом)
+          </h4>
+          <div class="row mb-3">
+            {% for seat in seats_list %}
+              <div class="col-auto">
+                {% render_button seat.row seat.number class_type.class_type.color seat.status task.pk class_type.pk %}
+              </div>
+            {% endfor %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .seating-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .seat-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 5px;
+    font-size: 0.8rem;
+    color: white;
+    text-align: center;
+    padding: 0;
+    margin: 5px;
+  }
+
+  .seat-btn:disabled {
+    background-color: #ccc !important;
+    cursor: not-allowed;
+  }
+
+  .seat-btn:not(:disabled):hover {
+    transform: scale(1.1);
+    transition: 0.3s ease-in-out;
+  }
+
+  .available {
+    background-color: green;
+  }
+
+  .sold {
+    background-color: red;
+  }
+
+  /* Стиль для каждого ряда */
+  .row {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+</style>
+{% endblock %}

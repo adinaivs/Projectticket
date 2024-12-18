@@ -54,26 +54,46 @@ class Token(models.Model):
         return self.token
 
 
-# Тип класса
+# Класс для типов мест (VIP, Стандарт и т.д.)
 class ClassType(models.Model):
-    name = models.CharField(max_length=50, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-    updated_at = models.DateTimeField(auto_now=True, blank=True, null=True)
+    name = models.CharField("Название класса", max_length=50)
+    color = models.CharField("Цвет", max_length=7, default="#FFFFFF")  # HEX-код для цвета
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name
 
 
-# Промежуточная модель для хранения цены и количества мест
+# Промежуточная модель: связывает Task и ClassType с ценой и количеством мест
 class TaskClassType(models.Model):
     task = models.ForeignKey('Task', on_delete=models.CASCADE, related_name="task_class_types")
     class_type = models.ForeignKey(ClassType, on_delete=models.CASCADE, related_name="class_type_tasks")
-    price = models.DecimalField('Цена', max_digits=10, decimal_places=2, null=True, blank=True)
-    available_seats = models.PositiveIntegerField(verbose_name=_("Доступные места"), null=True, blank=True)
+    price = models.DecimalField("Цена", max_digits=10, decimal_places=2)
+    available_seats = models.PositiveIntegerField("Доступные места")
 
     def __str__(self):
         return f"{self.task.title} - {self.class_type.name} ({self.price} руб., {self.available_seats} мест)"
 
+
+# Модель для мест на мероприятии
+class Seat(models.Model):
+    class Status(models.TextChoices):
+        AVAILABLE = "available", _("Доступно")
+        SOLD = "sold", _("Продано")
+
+    row = models.PositiveIntegerField("Ряд")
+    number = models.PositiveIntegerField("Номер места")
+    status = models.CharField(
+        "Статус",
+        max_length=10,
+        choices=Status.choices,
+        default=Status.AVAILABLE,
+    )
+    task_class_type = models.ForeignKey(TaskClassType, on_delete=models.CASCADE, related_name="seats")
+
+    def __str__(self):
+        return f"Ряд {self.row}, Место {self.number} - {self.get_status_display()} ({self.task_class_type.class_type.name})"
 
 # Модель мероприятия
 class Task(models.Model):

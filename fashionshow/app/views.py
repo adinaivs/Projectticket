@@ -1,4 +1,6 @@
-from .models import CustomUser, Task, Token, Comment
+from django.db.models.functions import datetime
+
+from .models import CustomUser, Task, Token, Comment, Seat
 import uuid
 from django.core.mail import send_mail
 from django.shortcuts import render, redirect, get_object_or_404
@@ -13,15 +15,30 @@ from django.utils.timezone import now
 from datetime import timedelta
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from django.utils.translation import gettext as _
+
+def event_booking(request, pk):
+    task = get_object_or_404(Task, pk=pk)
+    seats = Seat.objects.filter(task_class_type__task=task).select_related('task_class_type__class_type')
+    class_types = task.task_class_types.all()
+    filtered_seats = {class_type: seats.filter(task_class_type__class_type=class_type.class_type) for class_type in class_types}
+
+    context = {
+        "task": task,
+        "seats": filtered_seats,
+    }
+
+    return render(request, "booking/event_booking.html", context)
+
 
 @login_required
 def profile_view(request):
-    user = request.user  # Получаем текущего пользователя
-
+    user = request.user
     if request.method == 'POST':
         form = ProfileForm(request.POST, request.FILES, instance=user)
         if form.is_valid():
             form.save()
+            messages.success(request, _("Profile updated successfully."))
             return redirect('profile')
     else:
         form = ProfileForm(instance=user)
@@ -29,25 +46,30 @@ def profile_view(request):
     return render(request, 'app/profile.html', {'form': form, 'user': user})
 
 
-def index(request):
-    query = request.GET.get('q')  # Получение строки поиска
-    location_filter = request.GET.get('location')  # Фильтр по месту проведения
+def home(request):
+    title = request.GET.get('title', '').strip()
+    location = request.GET.get('location', '').strip()
+    event_date = request.GET.get('event_date', '').strip()
 
-    # Фильтрация мероприятий
     tasks = Task.objects.all()
-    if query:
-        tasks = tasks.filter(Q(title__icontains=query) | Q(task__icontains=query))
-    if location_filter:
-        tasks = tasks.filter(location__icontains=location_filter)
 
-    tasks = tasks.order_by('-id')
+    if title:
+        tasks = tasks.filter(title__icontains=title)
+    if location:
+        tasks = tasks.filter(location__icontains=location)
+    if event_date:
+        tasks = tasks.filter(event_date__date=event_date)
+
+    locations = Task.objects.values_list('location', flat=True).distinct()
 
     return render(request, 'app/index.html', {
-        'title': 'Главная страница сайта',
         'tasks': tasks,
-        'query': query,
-        'location_filter': location_filter,
+        'locations': locations,
+        'title_label': _('Title'),
+        'location_label': _('Location'),
+        'date_label': _('Event Date'),
     })
+
 
 class TaskDetailView(DetailView):
     model = Task
@@ -57,89 +79,56 @@ class TaskDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         task = self.get_object()
-
-        # Получаем все опубликованные комментарии, отсортированные по дате
         context['comments'] = Comment.objects.filter(task=task, is_published=True).order_by('-created_at')
-
-        # Добавляем форму для добавления комментария
         context['comment_form'] = CommentForm()
         return context
 
     def post(self, request, *args, **kwargs):
         task = self.get_object()
-
-        # Проверка, авторизован ли пользователь
         if not request.user.is_authenticated:
-            messages.warning(request, _('Вы не авторизованы. Чтобы добавить комментарий, нужно войти в систему.'))
+            messages.warning(request, _('You need to log in to post a comment.'))
             return redirect('task_detail', pk=task.pk)
 
-        # Проверяем, что форма прошла валидацию
         form = CommentForm(request.POST)
         if form.is_valid():
-            # Если форма валидна, сохраняем новый комментарий
             comment = form.save(commit=False)
             comment.task = task
-            comment.user = request.user  # Привязываем комментарий к текущему пользователю
+            comment.user = request.user
             comment.save()
-
-            # Перенаправляем на ту же страницу, чтобы отобразить новый комментарий
+            messages.success(request, _('Comment added successfully.'))
             return redirect('task_detail', pk=task.pk)
 
-        # Если форма невалидна, возвращаем тот же шаблон с ошибками
         context = self.get_context_data(**kwargs)
         context['comment_form'] = form
         return self.render_to_response(context)
 
 
-# Функция для переключения публикации комментария
 def toggle_comment_publish(request, pk):
     comment = get_object_or_404(Comment, pk=pk)
-
-    # Проверяем, что текущий пользователь — автор комментария или администратор
     if not request.user.is_authenticated:
-        messages.warning(request, _('Вы не авторизованы. Для изменения комментария необходимо войти в систему.'))
+        messages.warning(request, _('You need to log in to modify a comment.'))
         return redirect('task_detail', pk=comment.task.pk)
 
     if comment.user == request.user or request.user.is_staff:
         comment.is_published = not comment.is_published
         comment.save()
-        messages.success(request, _('Комментарий обновлен.'))
+        messages.success(request, _('Comment status updated.'))
     else:
-        messages.error(request, _('У вас нет прав для изменения этого комментария.'))
+        messages.error(request, _('You do not have permission to modify this comment.'))
 
     return redirect('task_detail', pk=comment.task.pk)
+
 
 @login_required
 def delete_comment(request, pk):
     comment = get_object_or_404(Comment, pk=pk)
-
-    # Проверяем, что пользователь может удалить комментарий
     if comment.user == request.user or request.user.is_staff:
         comment.delete()
-        messages.success(request, _('Комментарий был удалён.'))
+        messages.success(request, _('Comment deleted successfully.'))
     else:
-        messages.error(request, _('У вас нет прав для удаления этого комментария.'))
+        messages.error(request, _('You do not have permission to delete this comment.'))
 
     return redirect('task_detail', pk=comment.task.pk)
-
-def index(request):
-    # Получаем поисковый запрос из строки запроса
-    query = request.GET.get('q', '')  # 'q' - это имя поля в форме поиска
-    if query:
-        # Выполняем фильтрацию задач по названию или описанию
-        tasks = Task.objects.filter(
-            Q(title__icontains=query) | Q(task__icontains=query)
-        ).order_by('-id')
-    else:
-        # Если поисковый запрос не указан, выводим все задачи
-        tasks = Task.objects.order_by('-id')
-
-    # Передаём данные в шаблон
-    return render(request, 'app/index.html', {
-        'title': 'Главная страница сайта',
-        'tasks': tasks,
-        'query': query,  # Передаём запрос для отображения в форме
-    })
 
 
 class RegisterView(FormView):
@@ -150,29 +139,21 @@ class RegisterView(FormView):
     def form_valid(self, form):
         email = form.cleaned_data["email"]
         password = form.cleaned_data["password"]
-
         user, created = CustomUser.objects.get_or_create(email=email)
         if created:
             user.set_password(password)
             user.is_active = False
             user.save()
-
-            # Генерация токена
             token = uuid.uuid4().hex
-            expires_at = now() + timedelta(hours=24)  # Токен действует 24 часа
+            expires_at = now() + timedelta(hours=24)
             Token.objects.create(token=token, user=user, expires_at=expires_at)
 
-            # Ссылка для подтверждения
-            confirm_link = self.request.build_absolute_uri(
-                reverse_lazy("register_confirm", kwargs={"token": token})
-            )
-
-            # Отправка письма
+            confirm_link = self.request.build_absolute_uri(reverse_lazy("register_confirm", kwargs={"token": token}))
             message = _(f"Follow this link: {confirm_link} to confirm your registration.")
             send_mail(
                 subject=_("Please confirm your registration!"),
                 message=message,
-                from_email="amanbaevaadinaj676@gmail.com",
+                from_email="example@example.com",
                 recipient_list=[user.email],
             )
             messages.success(self.request, _("A confirmation email has been sent to your email address."))
@@ -184,6 +165,7 @@ class RegisterView(FormView):
                 form.add_error("email", _("This email is already registered."))
 
         return super().form_valid(form)
+
 
 def register_confirm(request, token):
     try:

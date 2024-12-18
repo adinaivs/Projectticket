@@ -1,7 +1,14 @@
 from django.contrib import admin
-from .models import CustomUser, Task, ClassType, TaskClassType
+from .models import CustomUser, Task, ClassType, TaskClassType, Comment
 
 admin.site.site_header = 'Fashion Show Admin Panel'
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ('subject', 'user', 'task', 'is_published', 'created_at')  # Поля, отображаемые в списке
+    list_filter = ('is_published', 'created_at')  # Фильтры в правой части страницы
+    search_fields = ('subject', 'user_email', 'task_title')  # Поля для поиска
+    list_per_page = 10  # Количество записей на странице
 
 # Регистрируем модель CustomUser
 @admin.register(CustomUser)

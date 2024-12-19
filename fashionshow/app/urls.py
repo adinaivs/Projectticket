@@ -12,9 +12,11 @@ urlpatterns = [
     path('comment/<int:pk>/toggle/', views.toggle_comment_publish, name='comment_toggle_publish'),
     path('comment/delete/<int:pk>/', views.delete_comment, name='delete_comment'),
     path('task/<int:pk>/seats/', seat_pr, name='seat_pr'),
+    path('save-booking/', views.save_booking, name='save_booking'),
 
     path('profile/', profile_view, name='profile'),
     path('about/', views.about, name='about'),  # Исправлено: изменен путь на '/about/'
+    path('my-tickets/', views.my_tickets_view, name='my_tickets'),
 
     path('login', user_login, name="login"),
     path('signup', RegisterView.as_view(), name="signup"),

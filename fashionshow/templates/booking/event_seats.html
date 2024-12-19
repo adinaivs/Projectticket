@@ -53,6 +53,16 @@
             margin-bottom: 20px;
             font-family: 'Georgia', serif;
             font-size: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .class-price {
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .seat-container {
@@ -62,9 +72,16 @@
             margin-right: auto;
         }
 
-        .class-price {
-            font-weight: bold;
-            margin-top: 20px;
+        .class-price span {
+            margin-left: 10px; /* Добавляет отступ между ценой и классом */
+        }
+
+        .class-price p {
+            margin: 0;
+        }
+
+        .class-price-info {
+            font-size: 14px;
         }
 
         .payment-container {
@@ -102,9 +119,10 @@
     <!-- Блок с ценами для каждого класса -->
     <div class="class-info">
         {% for task_class_type in task_class_types %}
-            <p class="class-price" style="color: {% if task_class_type.class_type.name == 'First Class' %}#ff9900{% elif task_class_type.class_type.name == 'Second Class' %}#33cc33{% elif task_class_type.class_type.name == 'VIP' %}#cc33cc{% endif %}">
-                Стоимость {{ task_class_type.class_type.name }}: {{ task_class_type.price }} руб.
-            </p>
+            <div class="class-price" style="color: {% if task_class_type.class_type.name == 'First Class' %}#ff9900{% elif task_class_type.class_type.name == 'Second Class' %}#33cc33{% elif task_class_type.class_type.name == 'VIP' %}#cc33cc{% endif %}">
+                <span>{{ task_class_type.class_type.name }}</span>
+                <span class="class-price-info">Стоимость: {{ task_class_type.price }} руб.</span>
+            </div>
         {% endfor %}
     </div>
 
@@ -145,7 +163,6 @@
             const paymentButton = document.getElementById('payment-button');
 
             if (selectedSeats.length > 0) {
-                // Только количество билетов и общая сумма
                 ticketSummary.innerHTML = `Вы выбрали ${selectedSeats.length} билет(ов) на сумму ${totalPrice} руб.`;
                 paymentButton.disabled = false;
             } else {
@@ -169,7 +186,7 @@
                         totalPrice -= seatPrice;
                     } else {
                         this.classList.add('selected');
-                        selectedSeats.push({ id: seatId, number: seatNumber });
+                        selectedSeats.push({ id: seatId, number: seatNumber, price: seatPrice });
                         totalPrice += seatPrice;
                     }
 
@@ -181,8 +198,33 @@
         // Обработчик клика по кнопке "Перейти к оплате"
         document.getElementById('payment-button').addEventListener('click', function() {
             if (selectedSeats.length > 0) {
-                // Перенаправление на страницу оплаты (например, "/payment")
-                window.location.href = "/payment?seats=" + selectedSeats.map(seat => seat.id).join(",");
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+                fetch('/save-booking/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({
+                        seat_ids: selectedSeats.map(seat => seat.id),
+                        total_price: totalPrice
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`Бронь успешно создана! Номер брони: ${data.booking_id}`);
+                        // Перенаправляем на страницу оплаты
+                        window.location.href = "/payment?booking_id=" + data.booking_id;
+                    } else {
+                        alert(data.error || "Ошибка при создании брони");
+                    }
+                })
+                .catch(error => {
+                    console.error("Ошибка:", error);
+                    alert("Произошла ошибка. Попробуйте снова.");
+                });
             } else {
                 alert("Пожалуйста, выберите хотя бы одно место.");
             }

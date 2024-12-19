@@ -66,6 +66,38 @@ class Token(models.Model):
     def __str__(self):
         return self.token
 
+from django.db import models
+from django.conf import settings
+
+class Booking(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Ожидание'),
+        ('confirmed', 'Подтверждена'),
+        ('cancelled', 'Отменена'),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='bookings',
+        verbose_name="Пользователь"
+    )
+    seats = models.ManyToManyField('Seat', related_name='bookings', verbose_name="Места")
+    total_price = models.DecimalField("Общая стоимость", max_digits=10, decimal_places=2, default=0.0)
+    status = models.CharField("Статус брони", max_length=10, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField("Дата создания", auto_now_add=True)
+    updated_at = models.DateTimeField("Дата обновления", auto_now=True)
+
+    def __str__(self):
+        return f"Бронь {self.id} - {self.user.email}"
+
+    def calculate_total_price(self):
+        """
+        Пересчитывает общую стоимость брони на основе цен выбранных мест.
+        """
+        self.total_price = sum(seat.task_class_type.price for seat in self.seats.all())
+        self.save()
+
 
 # Класс для типов мест (VIP, Стандарт и т.д.)
 class ClassType(models.Model):

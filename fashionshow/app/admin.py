@@ -1,7 +1,31 @@
 from django.contrib import admin
-from .models import CustomUser, Task, ClassType, TaskClassType, Comment, Seat
+from .models import CustomUser, Task, ClassType, TaskClassType, Comment, Seat, Booking
 
 admin.site.site_header = 'Fashion Show Admin Panel'
+
+
+class BookingAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'total_price', 'status', 'created_at', 'updated_at')
+    list_filter = ('status', 'created_at')
+    search_fields = ('user__email',)
+    ordering = ('-created_at',)
+    readonly_fields = ('total_price',)  # Вы можете сделать поле 'total_price' только для чтения
+    actions = ['confirm_booking', 'cancel_booking']
+
+    def confirm_booking(self, request, queryset):
+        queryset.update(status='confirmed')
+        self.message_user(request, "Бронь успешно подтверждена")
+
+    def cancel_booking(self, request, queryset):
+        queryset.update(status='cancelled')
+        self.message_user(request, "Бронь успешно отменена")
+
+    confirm_booking.short_description = "Подтвердить брони"
+    cancel_booking.short_description = "Отменить брони"
+
+
+admin.site.register(Booking, BookingAdmin)
+
 
 @admin.register(Seat)
 class SeatAdmin(admin.ModelAdmin):

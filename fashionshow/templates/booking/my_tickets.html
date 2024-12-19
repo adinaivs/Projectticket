@@ -1,0 +1,31 @@
+{% extends 'app/base.html' %}
+
+{% block title %}
+Мои билеты
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 40px 20px; color: #333;">
+  <h2>Ваши бронирования</h2>
+
+  {% if bookings %}
+    <div class="list-group">
+      {% for booking in bookings %}
+        <div class="list-group-item">
+          <h5>Бронь #{{ booking.id }}</h5>
+          <p><strong>Статус:</strong> {{ booking.get_status_display }}</p>
+          <p><strong>Места:</strong>
+            {% for seat in booking.seats.all %}
+              {{ seat.number }}{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+          </p>
+          <p><strong>Общая стоимость:</strong> {{ booking.total_price }} ₽</p>
+          <p><strong>Дата создания:</strong> {{ booking.created_at }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p>У вас нет бронирований.</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -16,27 +16,72 @@ from django.utils.translation import gettext as _
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.conf import settings
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.shortcuts import get_object_or_404
+from .models import Booking, Seat, TaskClassType
+import json
+from django.http import JsonResponse
+from .models import Booking, Seat
 
+
+@login_required
+def my_tickets_view(request):
+    # Получаем все бронирования текущего пользователя
+    bookings = Booking.objects.filter(user=request.user)
+
+    # Передаем информацию о бронированиях в шаблон
+    return render(request, 'booking/my_tickets.html', {'bookings': bookings})
+
+
+@csrf_exempt
+def save_booking(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        selected_seat_ids = data.get('seat_ids', [])
+        total_price = data.get('total_price', 0)
+
+        # Проверка наличия мест
+        seats = Seat.objects.filter(id__in=selected_seat_ids)
+        if len(seats) != len(selected_seat_ids):
+            return JsonResponse({'error': 'Некоторые места не найдены'}, status=400)
+
+        # Проверка, что места не заняты
+        if seats.filter(is_reserved=True).exists():
+            return JsonResponse({'error': 'Некоторые места уже заняты'}, status=400)
+
+        # Создание бронирования
+        booking = Booking.objects.create(user=request.user, total_price=total_price)
+
+        # Добавляем места в бронирование
+        booking.seats.set(seats)
+
+        # Обновляем статус мест
+        seats.update(is_reserved=True)
+
+        return JsonResponse({'success': True, 'booking_id': booking.id})
+
+    return JsonResponse({'error': 'Неверный метод запроса'}, status=405)
 
 
 def payment_view(request):
-    # Получаем ID выбранных мест из параметров URL
-    seats = request.GET.get('seats', '')  # Параметр seats из URL
-    total_price = request.GET.get('total_price', 0)  # Параметр total_price из URL
+    # Получаем ID брони из параметров URL
+    booking_id = request.GET.get('booking_id', None)
 
-    if seats:
-        seats_list = seats.split(',')
-        # Преобразуем total_price в целое число, если это нужно
-        try:
-            total_price = float(total_price)  # Если нужно работать с числами с плавающей точкой
-        except ValueError:
-            total_price = 0  # Если преобразование не удалось, установим 0
+    if booking_id:
+        # Получаем объект бронирования по ID
+        booking = get_object_or_404(Booking, id=booking_id)
 
-        # Передаем выбранные места и сумму в шаблон
-        return render(request, 'booking/payment.html', {'seats': seats_list, 'total_price': total_price})
+        # Извлекаем выбранные места через связь ManyToManyField
+        seats_list = booking.seats.all()  # Получаем все связанные места
+        total_price = booking.total_price
+
+        # Передаем информацию о местах и сумме в шаблон
+        return render(request, 'booking/payment.html', {'seats': seats_list, 'total_price': total_price, 'booking': booking})
     else:
-        # Если места не указаны, возвращаем сообщение об ошибке
-        return HttpResponse('Не выбраны места для оплаты.', status=400)
+        # Если booking_id не передан, возвращаем ошибку
+        return HttpResponse('Ошибка: не указан ID брони.', status=400)
+
 
 def payment_form_view(request):
     # Логика для обработки формы с картой

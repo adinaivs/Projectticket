@@ -13,7 +13,38 @@ from django.utils.timezone import now
 from datetime import timedelta
 from django.contrib.auth.decorators import login_required
 from django.utils.translation import gettext as _
+from django.shortcuts import render
+from django.http import HttpResponse
 
+from django.http import HttpResponse
+from django.shortcuts import render
+
+def payment_view(request):
+    # Получаем ID выбранных мест из параметров URL
+    seats = request.GET.get('seats', '')  # Параметр seats из URL
+    total_price = request.GET.get('total_price', 0)  # Параметр total_price из URL
+
+    if seats:
+        seats_list = seats.split(',')
+        # Преобразуем total_price в целое число, если это нужно
+        try:
+            total_price = float(total_price)  # Если нужно работать с числами с плавающей точкой
+        except ValueError:
+            total_price = 0  # Если преобразование не удалось, установим 0
+
+        # Передаем выбранные места и сумму в шаблон
+        return render(request, 'booking/payment.html', {'seats': seats_list, 'total_price': total_price})
+    else:
+        # Если места не указаны, возвращаем сообщение об ошибке
+        return HttpResponse('Не выбраны места для оплаты.', status=400)
+
+def payment_form_view(request):
+    # Логика для обработки формы с картой
+    if request.method == 'POST':
+        card_number = request.POST.get('cardNumber')
+        card_holder = request.POST.get('cardHolder')
+        # Здесь можно добавить обработку данных карты
+    return render(request, 'booking/payment_form.html')
 
 def seat_pr(request, pk):
     # Получаем задачу по её ID (primary key)

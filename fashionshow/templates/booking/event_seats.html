@@ -6,18 +6,20 @@
             margin: 10px 0;
             display: flex;
             justify-content: space-evenly;
-            flex-wrap: wrap; /* Для лучшего расположения кнопок */
+            flex-wrap: wrap;
         }
 
         .seat {
             width: 30px;
             height: 30px;
             margin: 5px;
-            border: 2px solid #ccc; /* Обводка вокруг кнопок */
+            border: 2px solid #ccc;
             border-radius: 5px;
             text-align: center;
             line-height: 30px;
             cursor: pointer;
+            font-family: 'Arial', sans-serif;
+            font-size: 14px;
         }
 
         .reserved {
@@ -36,31 +38,60 @@
         }
 
         .first-class {
-            background-color: #ff9900; /* Оранжевый */
+            background-color: #ff9900;
         }
 
         .second-class {
-            background-color: #33cc33; /* Зеленый */
+            background-color: #33cc33;
         }
 
         .vip-class {
-            background-color: #cc33cc; /* Пурпурный */
+            background-color: #cc33cc;
         }
 
         .class-info {
             margin-bottom: 20px;
+            font-family: 'Georgia', serif;
+            font-size: 16px;
         }
 
         .seat-container {
             margin-top: 30px;
-            max-width: 80%; /* Уменьшаем ширину блока */
+            max-width: 80%;
             margin-left: auto;
-            margin-right: auto; /* Центрируем блок */
+            margin-right: auto;
         }
 
         .class-price {
             font-weight: bold;
             margin-top: 20px;
+        }
+
+        .payment-container {
+            position: absolute;
+            top: 90px;
+            right: 20px;
+            text-align: right;
+            font-family: 'Verdana', sans-serif;
+        }
+
+        .payment-button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .payment-button:disabled {
+            background-color: red;
+            cursor: not-allowed;
+        }
+
+        .ticket-info {
+            margin-top: 10px;
+            font-weight: bold;
         }
     </style>
 
@@ -71,14 +102,16 @@
     <!-- Блок с ценами для каждого класса -->
     <div class="class-info">
         {% for task_class_type in task_class_types %}
-            <p class="class-price" style="color:
-                {% if task_class_type.class_type.name == 'First Class' %} #ff9900;
-                {% elif task_class_type.class_type.name == 'Second Class' %} #33cc33;
-                {% elif task_class_type.class_type.name == 'VIP' %} #cc33cc;
-                {% endif %}">
+            <p class="class-price" style="color: {% if task_class_type.class_type.name == 'First Class' %}#ff9900{% elif task_class_type.class_type.name == 'Second Class' %}#33cc33{% elif task_class_type.class_type.name == 'VIP' %}#cc33cc{% endif %}">
                 Стоимость {{ task_class_type.class_type.name }}: {{ task_class_type.price }} руб.
             </p>
         {% endfor %}
+    </div>
+
+    <!-- Кнопка и текст в правом верхнем углу -->
+    <div class="payment-container">
+        <button id="payment-button" class="payment-button" disabled>Перейти к оплате</button>
+        <div id="ticket-summary" class="ticket-info">Выберите билеты</div>
     </div>
 
     <!-- Блок с кнопками мест -->
@@ -91,6 +124,8 @@
                         <button class="seat {% if seat.is_reserved %}reserved{% else %}available{% endif %}
                                 {% if seat.task_class_type.class_type.name == 'First Class' %}first-class{% elif seat.task_class_type.class_type.name == 'Second Class' %}second-class{% elif seat.task_class_type.class_type.name == 'VIP' %}vip-class{% endif %}"
                                 data-seat-id="{{ seat.id }}"
+                                data-seat-number="{{ seat.number }}"
+                                data-seat-price="{{ task_class_type.price }}"
                                 {% if seat.is_reserved %}disabled{% endif %}>
                             {{ seat.number }}
                         </button>
@@ -101,13 +136,56 @@
     </div>
 
     <script>
-        // Пример для выделения выбранного места
+        let selectedSeats = [];
+        let totalPrice = 0;
+
+        // Функция для обновления информации о выбранных билетах
+        function updateTicketSummary() {
+            const ticketSummary = document.getElementById('ticket-summary');
+            const paymentButton = document.getElementById('payment-button');
+
+            if (selectedSeats.length > 0) {
+                // Только количество билетов и общая сумма
+                ticketSummary.innerHTML = `Вы выбрали ${selectedSeats.length} билет(ов) на сумму ${totalPrice} руб.`;
+                paymentButton.disabled = false;
+            } else {
+                ticketSummary.innerHTML = `Выберите билеты`;
+                paymentButton.disabled = true;
+            }
+        }
+
+        // Обработчик клика по кнопкам мест
         document.querySelectorAll('.seat').forEach(button => {
             button.addEventListener('click', function() {
                 if (!this.classList.contains('reserved')) {
-                    this.classList.toggle('selected');
+                    const seatId = this.dataset.seatId;
+                    const seatNumber = this.dataset.seatNumber;
+                    const seatPrice = parseInt(this.dataset.seatPrice);
+
+                    // Если место уже выбрано, снимаем выбор
+                    if (this.classList.contains('selected')) {
+                        this.classList.remove('selected');
+                        selectedSeats = selectedSeats.filter(seat => seat.id !== seatId);
+                        totalPrice -= seatPrice;
+                    } else {
+                        this.classList.add('selected');
+                        selectedSeats.push({ id: seatId, number: seatNumber });
+                        totalPrice += seatPrice;
+                    }
+
+                    updateTicketSummary();
                 }
             });
+        });
+
+        // Обработчик клика по кнопке "Перейти к оплате"
+        document.getElementById('payment-button').addEventListener('click', function() {
+            if (selectedSeats.length > 0) {
+                // Перенаправление на страницу оплаты (например, "/payment")
+                window.location.href = "/payment?seats=" + selectedSeats.map(seat => seat.id).join(",");
+            } else {
+                alert("Пожалуйста, выберите хотя бы одно место.");
+            }
         });
     </script>
 {% endblock %}

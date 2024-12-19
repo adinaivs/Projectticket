@@ -30,7 +30,7 @@ urlpatterns = [
         template_name='registration/password_reset_complete.html'), name='password_reset_complete'),
     path('payment/', views.payment_view, name='payment'),
     path('payment/form/', views.payment_form_view, name='payment_form'),
-
+    path('payment_success/', views.payment_success, name='payment_success'),
 ]
 
 # Обработка медиафайлов

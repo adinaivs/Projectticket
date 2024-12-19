@@ -15,9 +15,9 @@ from django.contrib.auth.decorators import login_required
 from django.utils.translation import gettext as _
 from django.shortcuts import render
 from django.http import HttpResponse
+from django.conf import settings
 
-from django.http import HttpResponse
-from django.shortcuts import render
+
 
 def payment_view(request):
     # Получаем ID выбранных мест из параметров URL
@@ -44,7 +44,43 @@ def payment_form_view(request):
         card_number = request.POST.get('cardNumber')
         card_holder = request.POST.get('cardHolder')
         # Здесь можно добавить обработку данных карты
+
     return render(request, 'booking/payment_form.html')
+
+
+def payment_success(request):
+    # Устанавливаем параметры мероприятия
+    event_name = "Закатный Шарм"
+    event_date = "31 декабря 2024 г. 0:00"
+    event_location = "Город Бишкек, Улица Горького 12"
+
+    # Получаем email пользователя
+    user_email = request.user.email  # или request.POST.get('user_email') если передается через POST
+
+    # Формируем сообщение для отправки на почту
+    subject = f"Спасибо за покупку билета на {event_name}!"
+    message = f"""
+    Уважаемый пользователь,
+
+    Вы успешно купили билет на мероприятие "{event_name}".
+
+    Дата: {event_date}
+    Местоположение: {event_location}
+
+    Пожалуйста, не опаздывайте! Мы с нетерпением ждем вашего присутствия.
+
+    Спасибо за покупку, и мы надеемся, что вам понравится мероприятие!
+
+    С уважением,
+    FashionShow
+    """
+
+    from_email = settings.EMAIL_HOST_USER  # Ваш email
+    send_mail(subject, message, from_email, [user_email])
+
+    return render(request, 'booking/payment_success.html')
+
+
 
 def seat_pr(request, pk):
     # Получаем задачу по её ID (primary key)

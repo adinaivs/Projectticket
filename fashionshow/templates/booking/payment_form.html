@@ -2,7 +2,7 @@
 <div style="max-width: 400px; margin: 0 auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; background: #f9f9f9;">
     <h2 style="text-align: center; color: #333;">Введите данные карты для оплаты</h2>
 
-    <form method="post">
+    <form method="post" action="{% url 'payment_success' %}">
         {% csrf_token %}
         <div style="margin-bottom: 20px;">
             <label for="card_number" style="font-size: 16px;">Номер карты</label>
